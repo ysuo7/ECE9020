@@ -1,4 +1,6 @@
 import streamlit as st
+import datetime
+
 # Title and input
 
 def tab3_content():
@@ -13,6 +15,10 @@ def tab3_content():
 
     # Function to handle button clicks
     def button_click(label):
+        # log = f"time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}, button click: {label}"
+        # with open('./rpn.log', 'a') as f:
+        #     print(log)
+        #     f.write(log+'\n')
         if label == '=':
             try:
                 st.session_state.input = str(int(eval(st.session_state.input)))
