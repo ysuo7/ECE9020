@@ -6,367 +6,380 @@ import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.List;
 
 public class Canvas extends JComponent implements Observer {
     private Model model;
-    Point M = new Point(); // mouse point
-    Point C = new Point();
-
+    Point M = new Point(); // current mouse point
+    Point C = new Point(); // starting point
     int countline = 0;
     int countcircle = 0;
-    int countrectangel = 0;
+    int countrectangle = 0;
     boolean gotnotify = false;
+    private List<Point> freehandPoints;
 
-
-    Canvas(Model model){
-
+    Canvas(Model model) {
         super();
         this.model = model;
+        this.freehandPoints = new ArrayList<>();
         model.addObserver(this);
-        this.addMouseListener(new MouseAdapter(){
-            public void mouseClicked(MouseEvent e){
+
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
                 M.x = e.getX();
                 M.y = e.getY();
-                if (model.tool == "line"){
-                    if (countline == 0){
-                        C.x = e.getX();
-                        C.y = e.getY();
-                        countline +=1;
-                    } else {
-                        Point p1 =  new Point(C.x, C.y);
-                        Point p2 = new Point(e.getX(), e.getY());
-                         line item = new line(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
-                         model.addItem(item);
-                         countline -=1;
-                    }
-                } else if (model.tool == "circle"){
-                    if (countcircle == 0){
-                        C.x = e.getX();
-                        C.y = e.getY();
-                        countcircle +=1;
-                    } else {
-                        Point p1 =  new Point(C.x, C.y);
-                        Point p2 = new Point(e.getX(), e.getY());
-                        circle item = new circle(model.lastbutton.getName(), model.stickness, model.color,null, false, false, p1, p2);
-                        model.addItem(item);
-                        countcircle -=1;
-                    }
-                } else if(model.tool == "rectangle"){
-                    if (countrectangel == 0){
-                        C.x = e.getX();
-                        C.y = e.getY();
-                        countrectangel +=1;
-                    } else {
-                        Point p1 =  new Point(C.x, C.y);
-                        Point p2 = new Point(e.getX(), e.getY());
-                        rectangle item = new rectangle(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1,p2);
-                        model.addItem(item);
-                        countrectangel -=1;
-                    }
-                } else if (model.tool == "eraser"){
-                    Point p = new Point();
-                    p.x = e.getX();
-                    p.y = e.getY();
-                    for (function item : model.Items){
-                        if(item.closepoint(p)){
-                            model.removeItem(item);
+                if (model.tool != null) {
+                    switch (model.tool) {
+                        case "pen":
+                            freehandPoints.clear();
+                            freehandPoints.add(new Point(M));
                             break;
-                        }
-                    }
-                } else if (model.tool == "paint"){
-                    Point p = new Point();
-                    p.x = e.getX();
-                    p.y = e.getY();
-                    for (function item : model.Items){
-                        if(item.closepoint(p)){
-                            item.fillit(model.color);
+                        case "line":
+                            if (countline == 0) {
+                                C.x = e.getX();
+                                C.y = e.getY();
+                                countline = 1;
+                            }
                             break;
-                        }
-                    }
-                } else if (model.tool == "mouse"){
-                    Point p = new Point();
-                    p.x = e.getX();
-                    p.y = e.getY();
-                    for (function item : model.Items){
-                        item.beselect(false);
-                        model.theItem=null;
-                        model.someselect = false;
-                    }
-                    for (function item : model.Items){
-                        if(item.closepoint(p)){
-                            item.beselect(true);
-                            model.someselect = true;
-                            model.theItem = item;
-                            model.notifyViewObserver();
+                        case "circle":
+                            if (countcircle == 0) {
+                                C.x = e.getX();
+                                C.y = e.getY();
+                                countcircle = 1;
+                            }
                             break;
-                        }
+                        case "rectangle":
+                            if (countrectangle == 0) {
+                                C.x = e.getX();
+                                C.y = e.getY();
+                                countrectangle = 1;
+                            }
+                            break;
+                        case "eraser":
+                            eraseItemAt(e.getPoint());
+                            break;
+                        case "paint":
+                            paintEdgeAt(e.getPoint());
+                            break;
+                        case "mouse":
+                            selectItemAt(e.getPoint());
+                            break;
+                    }
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (model.tool != null) {
+                    switch (model.tool) {
+                        case "pen":
+                            if (!freehandPoints.isEmpty()) {
+                                pen item = new pen(model.lastbutton.getName(), model.stickness, model.color, new ArrayList<>(freehandPoints), false, false, null);
+                                model.addItem(item);
+                                freehandPoints.clear();
+                            }
+                            break;
+                        case "line":
+                            if (countline == 1) {
+                                Point p1 = new Point(C.x, C.y);
+                                Point p2 = new Point(e.getX(), e.getY());
+                                line item = new line(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
+                                model.addItem(item);
+                                countline = 0;
+                            }
+                            break;
+                        case "circle":
+                            if (countcircle == 1) {
+                                Point p1 = new Point(C.x, C.y);
+                                Point p2 = new Point(e.getX(), e.getY());
+                                circle item = new circle(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
+                                model.addItem(item);
+                                countcircle = 0;
+                            }
+                            break;
+                        case "rectangle":
+                            if (countrectangle == 1) {
+                                Point p1 = new Point(C.x, C.y);
+                                Point p2 = new Point(e.getX(), e.getY());
+                                rectangle item = new rectangle(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
+                                model.addItem(item);
+                                countrectangle = 0;
+                            }
+                            break;
+                        case "mouse":
+                            model.theItem = null;
+                            model.someselect = false;
+                            break;
                     }
                 }
                 repaint();
             }
         });
-
-        /*this.addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if(model.someselect = true && model.theItem.closepoint(e.getPoint())){
-                    System.out.println("Press");
-                    M = e.getPoint();
-                    repaint();
-                }
-            }
-        });*/
 
         this.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                if(model.someselect == true ) {
-                    int dx = e.getX() - M.x;
-                    int dy = e.getY() - M.y;
-                    model.theItem.changeposition(dx, dy);
-                    M = e.getPoint();
-                    repaint();
+                if (model.tool != null) {
+                    switch (model.tool) {
+                        case "pen":
+                            freehandPoints.add(new Point(e.getX(), e.getY()));
+                            repaint();
+                            break;
+                        case "line":
+                            M.x = e.getX();
+                            M.y = e.getY();
+                            repaint();
+                            break;
+                        case "circle":
+                            M.x = e.getX();
+                            M.y = e.getY();
+                            repaint();
+                            break;
+                        case "rectangle":
+                            M.x = e.getX();
+                            M.y = e.getY();
+                            repaint();
+                            break;
+                        case "eraser":
+                            eraseItemAt(e.getPoint());
+                            repaint();
+                            break;
+                        case "paint":
+                            paintEdgeAt(e.getPoint());
+                            repaint();
+                            break;
+                        case "mouse":
+                            if (model.someselect && model.theItem != null) {
+                                int dx = e.getX() - M.x;
+                                int dy = e.getY() - M.y;
+                                model.theItem.changeposition(dx, dy);
+                                M = e.getPoint();
+                                repaint();
+                            }
+                            break;
+                    }
                 }
             }
-        });
 
-
-        this.addMouseMotionListener(new MouseAdapter(){
-            public void mouseMoved(MouseEvent e){
+            @Override
+            public void mouseMoved(MouseEvent e) {
                 M.x = e.getX();
                 M.y = e.getY();
                 repaint();
             }
         });
-
     }
-    // custom graphics drawing
-    public void paintComponent(Graphics g) {
+
+    private void eraseItemAt(Point point) {
+        for (function item : model.Items) {
+            if (item.closepoint(point)) {
+                model.removeItem(item);
+                break;
+            }
+        }
+    }
+
+    private void paintEdgeAt(Point point) {
+        for (function item : model.Items) {
+            if (item.closepoint(point)) {
+                item.reset(model.color, item.getStickness());
+                break;
+            }
+        }
+    }
+
+    private void selectItemAt(Point point) {
+        for (function item : model.Items) {
+            item.beselect(false); // Deselect all items first
+        }
+        model.someselect = false;
+        for (function item : model.Items) {
+            if (item.closepoint(point)) {
+                item.beselect(true);
+                model.theItem = item;
+                model.someselect = true;
+                break;
+            }
+        }
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // cast to get 2D drawing methods
         Graphics2D g2 = (Graphics2D) g;
 
-        if(this.gotnotify){
+        if (this.gotnotify) {
             rp(g2);
         }
 
-        if (model.tool == "line"){
-            if(countline == 1){
-                g2.setColor(model.color);
-                g2.setStroke(new BasicStroke(model.stickness));
-                g2.drawLine(C.x, C.y, M.x, M.y);
-            }
-        } else if (model.tool == "circle"){
-            if(countcircle == 1){
-                g2.setColor(model.color);
-                g2.setStroke(new BasicStroke(model.stickness));
-                int x = Math.min(C.x, M.x);
-                int y = Math.min(C.y, M.y);
-                int width = Math.max(C.x, M.x) - Math.min(C.x, M.x);
-                int length = Math.max(C.y, M.y) - Math.min(C.y, M.y);
-                g2.drawOval(x,y,width,length);
-            }
-        } else if (model.tool == "rectangle"){
-            if(countrectangel == 1){
-                g2.setColor(model.color);
-                g2.setStroke(new BasicStroke(model.stickness));
-                int x = Math.min(C.x, M.x);
-                int y = Math.min(C.y, M.y);
-                int width = Math.max(C.x, M.x) - Math.min(C.x, M.x);
-                int length = Math.max(C.y, M.y) - Math.min(C.y, M.y);
-                g2.drawRect(x,y,width,length);
+        if (model.tool != null) {
+            switch (model.tool) {
+                case "line":
+                    if (countline == 1) {
+                        g2.setColor(model.color);
+                        g2.setStroke(new BasicStroke(model.stickness));
+                        g2.drawLine(C.x, C.y, M.x, M.y);
+                    }
+                    break;
+                case "circle":
+                    if (countcircle == 1) {
+                        g2.setColor(model.color);
+                        g2.setStroke(new BasicStroke(model.stickness));
+                        int x = Math.min(C.x, M.x);
+                        int y = Math.min(C.y, M.y);
+                        int width = Math.max(C.x, M.x) - Math.min(C.x, M.x);
+                        int length = Math.max(C.y, M.y) - Math.min(C.y, M.y);
+                        g2.drawOval(x, y, width, length);
+                    }
+                    break;
+                case "rectangle":
+                    if (countrectangle == 1) {
+                        g2.setColor(model.color);
+                        g2.setStroke(new BasicStroke(model.stickness));
+                        int x = Math.min(C.x, M.x);
+                        int y = Math.min(C.y, M.y);
+                        int width = Math.max(C.x, M.x) - Math.min(C.x, M.x);
+                        int length = Math.max(C.y, M.y) - Math.min(C.y, M.y);
+                        g2.drawRect(x, y, width, length);
+                    }
+                    break;
+                case "pen":
+                    if (!freehandPoints.isEmpty()) {
+                        g2.setColor(model.color);
+                        g2.setStroke(new BasicStroke(model.stickness));
+                        Point prev = freehandPoints.get(0);
+                        for (Point point : freehandPoints) {
+                            g2.drawLine(prev.x, prev.y, point.x, point.y);
+                            prev = point;
+                        }
+                    }
+                    break;
             }
         }
 
-        for(function item: model.Items){
+        for (function item : model.Items) {
             item.paint(g2);
         }
-        if(this.model.someselect){
+
+        if (this.model.someselect && this.model.theItem != null) {
             this.model.theItem.paint(g2);
         }
-
     }
 
-
-    public void rp(Graphics2D g){
-        /*System.out.println("repaint");
-        g.setColor(this.model.color);
-        float[] arr = {4.0f,2.0f};
-        BasicStroke stroke = new BasicStroke(this.model.stickness, BasicStroke.CAP_BUTT,
-                BasicStroke.JOIN_BEVEL, 1.0f,arr,0);
-        g.setStroke(stroke);*/
-        this.model.theItem.reset(this.model.color, this.model.stickness);
-        this.model.theItem.paint(g);
+    public void rp(Graphics2D g) {
+        if (this.model.theItem != null) {
+            this.model.theItem.reset(this.model.color, this.model.stickness);
+            this.model.theItem.paint(g);
+        }
         this.gotnotify = false;
-
     }
 
-    public void save(BufferedWriter bufw){
+    public void save(BufferedWriter bufw) {
         try {
             bufw.write(model.Items.size());
-            //System.out.println("Size :" + model.Items.size());
-            for(function item:model.Items){
+            for (function item : model.Items) {
                 String s = item.getname();
-                if(s.equals("line")){
+                if (s.equals("line")) {
                     bufw.write(1);
-                    //System.out.println("line");
-                } else if(s.equals("circle")){
+                } else if (s.equals("circle")) {
                     bufw.write(2);
-                    //System.out.println("circle");
-                } else if(s.equals("rectangle")){
+                } else if (s.equals("rectangle")) {
                     bufw.write(3);
-                    //System.out.println("rectangle");
                 }
 
                 bufw.write(item.getStickness());
-                //System.out.println("Stickness :" + item.getStickness());
 
-
-                if(item.getisfill()){
+                if (item.getisfill()) {
                     bufw.write(1);
-                    //System.out.println("isfill :" + 1);
                 } else {
                     bufw.write(0);
-                    //System.out.println("isfill :" + 0);
                 }
 
-                if(item.getisselect()){
+                if (item.getisselect()) {
                     bufw.write(1);
-                    ///System.out.println("isselect :" + 1);
                 } else {
                     bufw.write(0);
-                    //System.out.println("isselect :" + 0);
                 }
 
-                if(item.getisfill()){
+                if (item.getisfill()) {
                     bufw.write(item.getinner().getRGB());
-                    //System.out.println("get inner RGB: " + item.getinner().getRGB());
                 } else {
                     bufw.write(0);
-                    //System.out.println("no inner Color" + 0);
                 }
 
                 bufw.write(item.getColor().getRed());
-                //System.out.println("red :" + item.getColor().getRed());
                 bufw.write(item.getColor().getBlue());
-                //System.out.println("blue :" + item.getColor().getBlue());
                 bufw.write(item.getColor().getGreen());
-                //System.out.println("green :" + item.getColor().getGreen());
-
 
                 bufw.write(item.getP1().x);
-                //System.out.println("Get p1x");
                 bufw.write(item.getP2().x);
-                //System.out.println("Get p2x");
                 bufw.write(item.getP1().y);
-                //System.out.println("Get p1y");
                 bufw.write(item.getP2().y);
-                //System.out.println("Get p2y");
             }
+        } catch (IOException ex) {
+            throw new RuntimeException("Save File Failed", ex);
         }
-        catch (IOException ex) {
-
-            throw new RuntimeException("Save File Failed");
-
-        }
-
     }
 
-    public void read(BufferedReader bufr){
-        try{
+    public void read(BufferedReader bufr) {
+        try {
             model.Items.clear();
             int size = bufr.read();
-            System.out.println("Size :" + size);
-            for(int i = 0; i < size; i++){
+            for (int i = 0; i < size; i++) {
+                int x = bufr.read();
+                int stickness = bufr.read();
+                int isfill = bufr.read();
+                boolean isfillb = (isfill == 1);
 
-                int x = bufr.read();     //name
-                System.out.println(x);
-                int stickness = bufr.read(); // stickness
-                //System.out.println("stixkness :" + stickness);
+                int isselect = bufr.read();
+                boolean isselectb = (isselect == 1);
 
-                int isfill = bufr.read();  // isfill
-                //System.out.println("isfill :" + isfill);
-                boolean isfillb;
-                if(isfill == 1){
-                    isfillb = true;
-                } else {
-                    isfillb = false;
-                }
+                int inner = bufr.read();
+                Color innercl = isfillb ? new Color(inner) : null;
 
-                int isselect = bufr.read();  //isselect
-                //System.out.println("isselect :" + isselect);
-                boolean isselectb;
-                if(isselect == 1){
-                    isselectb = true;
-                } else {
-                    isselectb = false;
-                }
-
-                int inner = bufr.read();    //inner color
-                Color innercl;
-                if(isfillb){
-                    //System.out.println("get inner RGB: " + inner);
-                    innercl = new Color(inner);
-                } else {
-                    innercl = null;
-                    //System.out.println("get no inner RGB: " + inner);
-                }
-
-                int red = bufr.read(); //  color
-                //System.out.println("red :" + red);
+                int red = bufr.read();
                 int blue = bufr.read();
-                //System.out.println("red :" + blue);
                 int green = bufr.read();
-                //System.out.println("red :" + green);
                 Color color = new Color(red, blue, green);
 
-                int p1x = bufr.read();  //p1.x
-                //System.out.println("Get p1x");
-                int p2x = bufr.read();  //p2.x
-                //System.out.println("Get p2x");
-                int p1y = bufr.read();  //p1.y
-                //System.out.println("Get p1y");
-                int p2y = bufr.read();  //p2.y
-                //System.out.println("Get p2y");
+                int p1x = bufr.read();
+                int p2x = bufr.read();
+                int p1y = bufr.read();
+                int p2y = bufr.read();
                 Point p1 = new Point(p1x, p1y);
                 Point p2 = new Point(p2x, p2y);
 
-                if(x == 1){
-                    line item = new line("line", stickness, color, innercl, isfillb, isselectb, p1, p2);
-                    model.Items.add(item);
-                } else if (x == 2){
-                    circle item = new circle("circle", stickness, color, innercl, isfillb, isselectb, p1, p2);
-                    model.Items.add(item);
-                } else if (x == 3){
-                    rectangle item = new rectangle("rectangle", stickness, color, innercl, isfillb, isselectb, p1, p2);
-                    model.Items.add(item);
+                switch (x) {
+                    case 1:
+                        line item1 = new line("line", stickness, color, innercl, isfillb, isselectb, p1, p2);
+                        model.Items.add(item1);
+                        break;
+                    case 2:
+                        circle item2 = new circle("circle", stickness, color, innercl, isfillb, isselectb, p1, p2);
+                        model.Items.add(item2);
+                        break;
+                    case 3:
+                        rectangle item3 = new rectangle("rectangle", stickness, color, innercl, isfillb, isselectb, p1, p2);
+                        model.Items.add(item3);
+                        break;
                 }
-
             }
-
-        }
-
-
-        catch (IOException ex) {
-
-            throw new RuntimeException("Save File Failed");
-
+        } catch (IOException ex) {
+            throw new RuntimeException("Read File Failed", ex);
         }
 
         repaint();
     }
 
-
-    public void reset(){
+    public void reset() {
         model.Items.clear();
     }
 
     public void update(Object observable) {
-        // XXX Fill this in with the logic for updating the view when the model
-        // changes.
         this.gotnotify = true;
         repaint();
-        //System.out.println("Canvas changed!");
     }
 }

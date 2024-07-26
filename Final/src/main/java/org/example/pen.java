@@ -1,21 +1,18 @@
 package org.example;
 
 import java.awt.*;
-import java.awt.geom.Line2D;
+import java.util.List;
 
-public class line extends Item implements function {
+public class pen extends Item implements function {
+    private List<Point> points;
 
-    public line(String name, int stickness, Color color, Color inner, boolean isfill, boolean isselect, Point p1, Point p2) {
+    public pen(String name, int stickness, Color color, List<Point> points, boolean isfill, boolean isselect, Point p1) {
         this.name = name;
         this.color = color;
-        this.inner = inner;
         this.stickness = stickness;
         this.isfill = isfill;
         this.isselect = isselect;
-        this.p1 = new Point();
-        this.p2 = new Point();
-        this.p1 = p1;
-        this.p2 = p2;
+        this.points = points;
     }
 
     public void paint(Graphics2D g2) {
@@ -28,20 +25,34 @@ public class line extends Item implements function {
             g2.setStroke(new BasicStroke(this.stickness));
         }
         g2.setColor(this.color);
-        g2.drawLine(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
+        Point prev = points.get(0);
+        for (Point point : points) {
+            g2.drawLine(prev.x, prev.y, point.x, point.y);
+            prev = point;
+        }
     }
 
     public void fill(Graphics2D g2) {
-        // No fill for line
+        // No fill for pen
+    }
+
+    public void fillit(Color color) {
+        // No fill for pen
     }
 
     public void beselect(Boolean b) {
         this.isselect = b;
     }
 
-    @Override
     public boolean getselect() {
         return this.isselect;
+    }
+
+    public void changeposition(int dx, int dy) {
+        for (Point point : points) {
+            point.x += dx;
+            point.y += dy;
+        }
     }
 
     public void reset(Color color, int stickness) {
@@ -49,19 +60,6 @@ public class line extends Item implements function {
         this.stickness = stickness;
     }
 
-    public void fillit(Color color) {
-        // No fill for line
-    }
-
-    @Override
-    public void changeposition(int dx, int dy) {
-        this.p1.x += dx;
-        this.p2.x += dx;
-        this.p1.y += dy;
-        this.p2.y += dy;
-    }
-
-    @Override
     public Color getColor() {
         return this.color;
     }
@@ -72,11 +70,14 @@ public class line extends Item implements function {
     }
 
     public boolean closepoint(Point p) {
-        Line2D line = new Line2D.Double(this.p1, this.p2);
-        return line.ptLineDist(p) < 2;
+        for (Point point : points) {
+            if (point.distance(p) < 3) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    @Override
     public boolean getisfill() {
         return this.isfill;
     }
@@ -88,17 +89,17 @@ public class line extends Item implements function {
 
     @Override
     public Color getinner() {
-        return this.inner;
+        return null; // No inner color for pen
     }
 
     @Override
     public Point getP1() {
-        return this.p1;
+        return points.get(0);
     }
 
     @Override
     public Point getP2() {
-        return this.p2;
+        return points.get(points.size() - 1);
     }
 
     @Override
