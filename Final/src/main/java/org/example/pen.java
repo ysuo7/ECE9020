@@ -4,9 +4,11 @@ import java.awt.*;
 import java.util.List;
 
 public class pen extends Item implements function {
+    private Model model;
     private List<Point> points;
 
-    public pen(String name, int stickness, Color color, List<Point> points, boolean isfill, boolean isselect, Point p1) {
+    public pen(Model model, String name, int stickness, Color color, List<Point> points, boolean isfill, boolean isselect, Point p1) {
+        this.model = model;
         this.name = name;
         this.color = color;
         this.stickness = stickness;
@@ -41,6 +43,7 @@ public class pen extends Item implements function {
     }
 
     public void beselect(Boolean b) {
+        model.saveState(); // Save state before modifying
         this.isselect = b;
     }
 
@@ -49,6 +52,7 @@ public class pen extends Item implements function {
     }
 
     public void changeposition(int dx, int dy) {
+        model.saveState(); // Save state before modifying
         for (Point point : points) {
             point.x += dx;
             point.y += dy;
@@ -56,6 +60,7 @@ public class pen extends Item implements function {
     }
 
     public void reset(Color color, int stickness) {
+        model.saveState(); // Save state before modifying
         this.color = color;
         this.stickness = stickness;
     }

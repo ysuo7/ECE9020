@@ -28,6 +28,8 @@ public class Canvas extends JComponent implements Observer {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                model.saveState(); // Save state before any action
+
                 M.x = e.getX();
                 M.y = e.getY();
                 if (model.tool != null) {
@@ -76,7 +78,7 @@ public class Canvas extends JComponent implements Observer {
                     switch (model.tool) {
                         case "pen":
                             if (!freehandPoints.isEmpty()) {
-                                pen item = new pen(model.lastbutton.getName(), model.stickness, model.color, new ArrayList<>(freehandPoints), false, false, null);
+                                pen item = new pen(model, model.lastbutton.getName(), model.stickness, model.color, new ArrayList<>(freehandPoints), false, false, null);
                                 model.addItem(item);
                                 freehandPoints.clear();
                             }
@@ -85,7 +87,7 @@ public class Canvas extends JComponent implements Observer {
                             if (countline == 1) {
                                 Point p1 = new Point(C.x, C.y);
                                 Point p2 = new Point(e.getX(), e.getY());
-                                line item = new line(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
+                                line item = new line(model, model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
                                 model.addItem(item);
                                 countline = 0;
                             }
@@ -94,7 +96,7 @@ public class Canvas extends JComponent implements Observer {
                             if (countcircle == 1) {
                                 Point p1 = new Point(C.x, C.y);
                                 Point p2 = new Point(e.getX(), e.getY());
-                                circle item = new circle(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
+                                circle item = new circle(model, model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
                                 model.addItem(item);
                                 countcircle = 0;
                             }
@@ -103,7 +105,7 @@ public class Canvas extends JComponent implements Observer {
                             if (countrectangle == 1) {
                                 Point p1 = new Point(C.x, C.y);
                                 Point p2 = new Point(e.getX(), e.getY());
-                                rectangle item = new rectangle(model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
+                                rectangle item = new rectangle(model, model.lastbutton.getName(), model.stickness, model.color, null, false, false, p1, p2);
                                 model.addItem(item);
                                 countrectangle = 0;
                             }
@@ -354,15 +356,15 @@ public class Canvas extends JComponent implements Observer {
 
                 switch (x) {
                     case 1:
-                        line item1 = new line("line", stickness, color, innercl, isfillb, isselectb, p1, p2);
+                        line item1 = new line(model, "line", stickness, color, innercl, isfillb, isselectb, p1, p2);
                         model.Items.add(item1);
                         break;
                     case 2:
-                        circle item2 = new circle("circle", stickness, color, innercl, isfillb, isselectb, p1, p2);
+                        circle item2 = new circle(model, "circle", stickness, color, innercl, isfillb, isselectb, p1, p2);
                         model.Items.add(item2);
                         break;
                     case 3:
-                        rectangle item3 = new rectangle("rectangle", stickness, color, innercl, isfillb, isselectb, p1, p2);
+                        rectangle item3 = new rectangle(model, "rectangle", stickness, color, innercl, isfillb, isselectb, p1, p2);
                         model.Items.add(item3);
                         break;
                 }

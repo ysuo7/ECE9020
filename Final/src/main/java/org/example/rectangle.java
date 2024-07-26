@@ -8,8 +8,10 @@ public class rectangle extends Item implements function {
     Line2D bottom;
     Line2D left;
     Line2D right;
+    private Model model;
 
-    public rectangle(String name, int stickness, Color color, Color inner, boolean isfill, boolean isselect, Point p1, Point p2) {
+    public rectangle(Model model, String name, int stickness, Color color, Color inner, boolean isfill, boolean isselect, Point p1, Point p2) {
+        this.model = model;
         this.name = name;
         this.color = color;
         this.stickness = stickness;
@@ -68,11 +70,13 @@ public class rectangle extends Item implements function {
     }
 
     public void fillit(Color color) {
+        model.saveState(); // Save state before modifying
         this.isfill = true;
         this.inner = color;
     }
 
     public void beselect(Boolean b) {
+        model.saveState(); // Save state before modifying
         this.isselect = b;
     }
 
@@ -81,6 +85,7 @@ public class rectangle extends Item implements function {
     }
 
     public void changeposition(int dx, int dy) {
+        model.saveState(); // Save state before modifying
         this.p1.x += dx;
         this.p2.x += dx;
         this.p1.y += dy;
@@ -104,6 +109,7 @@ public class rectangle extends Item implements function {
     }
 
     public void reset(Color color, int stickness) {
+        model.saveState(); // Save state before modifying
         this.color = color;
         this.stickness = stickness;
     }

@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class Model {
 
@@ -23,10 +24,16 @@ public class Model {
     public void removeItem(function item){this.Items.remove(item);}
 
     private List<Observer> observers;
+    
+    // Stacks for undo and redo operations
+    private Stack<List<function>> undoStack;
+    private Stack<List<function>> redoStack;
 
     public Model() {
         this.observers = new ArrayList<>();
         this.Items = new ArrayList<>();
+        this.undoStack = new Stack<>();
+        this.redoStack = new Stack<>();
     }
 
     public void addObserver(Observer observer) {
@@ -94,6 +101,30 @@ public class Model {
             stickness = 3;
         } else if(name.equals("4")){
             stickness = 4;
+        }
+    }
+
+    // Method to save the current state
+    public void saveState() {
+        undoStack.push(new ArrayList<>(Items));
+        redoStack.clear();
+    }
+
+    // Method to undo the last action
+    public void undo() {
+        if (!undoStack.isEmpty()) {
+            redoStack.push(new ArrayList<>(Items));
+            Items = undoStack.pop();
+            notifyObservers();
+        }
+    }
+
+    // Method to redo the last undone action
+    public void redo() {
+        if (!redoStack.isEmpty()) {
+            undoStack.push(new ArrayList<>(Items));
+            Items = redoStack.pop();
+            notifyObservers();
         }
     }
 }

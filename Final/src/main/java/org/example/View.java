@@ -35,6 +35,28 @@ public class View extends JPanel implements Observer {
             tool.add(b);
         }
 
+        // Add undo and redo buttons
+        JButton undoButton = new JButton("Undo");
+        undoButton.setPreferredSize(new Dimension(100, 30));
+        undoButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                model.undo();
+                repaint();
+            }
+        });
+        
+        JButton redoButton = new JButton("Redo");
+        redoButton.setPreferredSize(new Dimension(100, 30));
+        redoButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                model.redo();
+                repaint();
+            }
+        });
+
+        tool.add(undoButton);
+        tool.add(redoButton);
+
         JPanel setcolor = new JPanel();
         setcolor.setLayout(new FlowLayout());
         setcolor.setBackground(Color.white);

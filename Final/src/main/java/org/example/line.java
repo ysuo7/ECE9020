@@ -4,8 +4,10 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 
 public class line extends Item implements function {
+    private Model model;
 
-    public line(String name, int stickness, Color color, Color inner, boolean isfill, boolean isselect, Point p1, Point p2) {
+    public line(Model model, String name, int stickness, Color color, Color inner, boolean isfill, boolean isselect, Point p1, Point p2) {
+        this.model = model;
         this.name = name;
         this.color = color;
         this.inner = inner;
@@ -36,6 +38,7 @@ public class line extends Item implements function {
     }
 
     public void beselect(Boolean b) {
+        model.saveState(); // Save state before modifying
         this.isselect = b;
     }
 
@@ -45,6 +48,7 @@ public class line extends Item implements function {
     }
 
     public void reset(Color color, int stickness) {
+        model.saveState(); // Save state before modifying
         this.color = color;
         this.stickness = stickness;
     }
@@ -55,6 +59,7 @@ public class line extends Item implements function {
 
     @Override
     public void changeposition(int dx, int dy) {
+        model.saveState(); // Save state before modifying
         this.p1.x += dx;
         this.p2.x += dx;
         this.p1.y += dy;
