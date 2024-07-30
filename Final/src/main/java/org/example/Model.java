@@ -5,8 +5,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.io.Serializable;
 
-public class Model {
+public class Model implements Serializable {
 
     JButton lastbutton = null;
     JButton toolbutton = null;

@@ -1,8 +1,9 @@
 package org.example;
 
 import java.awt.*;
+import java.io.Serializable;
 
-public class Item{
+public class Item implements Serializable {
     String name;
     int stickness;
     Boolean isfill;

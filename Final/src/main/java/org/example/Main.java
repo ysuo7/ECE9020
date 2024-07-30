@@ -42,20 +42,17 @@ public class Main {
                 mi.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        if (file == null) {
-                            saveDia.setVisible(true);
-                            String dirPath = saveDia.getDirectory();
-                            String fileName = saveDia.getFile();
-                            if (dirPath == null || fileName == null)
-                                return;
-
-                            file = new File(dirPath, fileName);
-                        }
+                        saveDia.setVisible(true);
+                        String dirPath = saveDia.getDirectory();
+                        String fileName = saveDia.getFile();
+                        if (dirPath == null || fileName == null)
+                            return;
+                        file = new File(dirPath, fileName);
 
                         try {
-                            BufferedWriter bufw = new BufferedWriter(new FileWriter(file));
-                            canvas.save(bufw);
-                            bufw.close();
+                            FileOutputStream fos = new FileOutputStream(file);
+                            canvas.save(fos);
+                            fos.close();
                         } catch (IOException ex) {
                             throw new RuntimeException("Save File Failed", ex);
                         }
@@ -75,9 +72,9 @@ public class Main {
                         file = new File(dirPath, fileName);
 
                         try {
-                            BufferedReader bufr = new BufferedReader(new FileReader(file));
-                            canvas.read(bufr);
-                            bufr.close();
+                            FileInputStream fis = new FileInputStream(file);
+                            canvas.read(fis);
+                            fis.close();
                         } catch (IOException ex) {
                             throw new RuntimeException("Open File Failed", ex);
                         }
@@ -88,6 +85,7 @@ public class Main {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         canvas.reset();
+                        file = null;
                     }
                 });
             }

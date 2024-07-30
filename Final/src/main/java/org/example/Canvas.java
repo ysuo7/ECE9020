@@ -3,9 +3,7 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -279,98 +277,26 @@ public class Canvas extends JComponent implements Observer {
         this.gotnotify = false;
     }
 
-    public void save(BufferedWriter bufw) {
+    public void save(FileOutputStream fos) {
         try {
-            bufw.write(model.Items.size());
-            for (function item : model.Items) {
-                String s = item.getname();
-                if (s.equals("line")) {
-                    bufw.write(1);
-                } else if (s.equals("circle")) {
-                    bufw.write(2);
-                } else if (s.equals("rectangle")) {
-                    bufw.write(3);
-                }
-
-                bufw.write(item.getStickness());
-
-                if (item.getisfill()) {
-                    bufw.write(1);
-                } else {
-                    bufw.write(0);
-                }
-
-                if (item.getisselect()) {
-                    bufw.write(1);
-                } else {
-                    bufw.write(0);
-                }
-
-                if (item.getisfill()) {
-                    bufw.write(item.getinner().getRGB());
-                } else {
-                    bufw.write(0);
-                }
-
-                bufw.write(item.getColor().getRed());
-                bufw.write(item.getColor().getBlue());
-                bufw.write(item.getColor().getGreen());
-
-                bufw.write(item.getP1().x);
-                bufw.write(item.getP2().x);
-                bufw.write(item.getP1().y);
-                bufw.write(item.getP2().y);
-            }
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(model.Items);
+            // your code here
         } catch (IOException ex) {
             throw new RuntimeException("Save File Failed", ex);
         }
     }
 
-    public void read(BufferedReader bufr) {
+    public void read(FileInputStream fis) {
+        model.Items.clear();
         try {
-            model.Items.clear();
-            int size = bufr.read();
-            for (int i = 0; i < size; i++) {
-                int x = bufr.read();
-                int stickness = bufr.read();
-                int isfill = bufr.read();
-                boolean isfillb = (isfill == 1);
-
-                int isselect = bufr.read();
-                boolean isselectb = (isselect == 1);
-
-                int inner = bufr.read();
-                Color innercl = isfillb ? new Color(inner) : null;
-
-                int red = bufr.read();
-                int blue = bufr.read();
-                int green = bufr.read();
-                Color color = new Color(red, blue, green);
-
-                int p1x = bufr.read();
-                int p2x = bufr.read();
-                int p1y = bufr.read();
-                int p2y = bufr.read();
-                Point p1 = new Point(p1x, p1y);
-                Point p2 = new Point(p2x, p2y);
-
-                switch (x) {
-                    case 1:
-                        line item1 = new line(model, "line", stickness, color, innercl, isfillb, isselectb, p1, p2);
-                        model.Items.add(item1);
-                        break;
-                    case 2:
-                        circle item2 = new circle(model, "circle", stickness, color, innercl, isfillb, isselectb, p1, p2);
-                        model.Items.add(item2);
-                        break;
-                    case 3:
-                        rectangle item3 = new rectangle(model, "rectangle", stickness, color, innercl, isfillb, isselectb, p1, p2);
-                        model.Items.add(item3);
-                        break;
-                }
-            }
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            model.Items = (List<function>) ois.readObject();
+            // your code here
         } catch (IOException ex) {
             throw new RuntimeException("Read File Failed", ex);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Load save file", e);
         }
 
         repaint();
